@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Theo dõi nhiệm vụ</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fc;color:#14233c;font:16px system-ui}header{background:#111b30;color:white;padding:32px max(24px,calc((100vw - 1200px)/2));border-bottom:4px solid #2457eb}h1{margin:0 0 10px}main{max-width:1200px;margin:24px auto;padding:0 20px}.panel{background:white;border:1px solid #d6deee;border-radius:12px;padding:20px;margin-bottom:18px}input,button{font:inherit;padding:11px;border:1px solid #ccd6e8;border-radius:7px}input[type=url]{width:100%;margin:10px 0}button{background:#2457eb;color:white;cursor:pointer}button:disabled{opacity:.6}label{display:block;margin:10px 0}.tools{display:flex;flex-wrap:wrap;align-items:center;gap:16px}#status{line-height:1.6}#search{width:100%}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}article{background:white;border:1px solid #d6deee;border-top:4px solid #2457eb;border-radius:10px;padding:18px;overflow-wrap:anywhere}article h3{margin:0 0 15px}dl{margin:0}dt{font-size:13px;color:#63728e;margin-top:12px}dd{margin:3px 0;white-space:pre-wrap}.count{font-size:24px;font-weight:700}small{color:#63728e}
+.cards{grid-template-columns:1fr}.badge{color:#126253;font-size:13px}select{font:inherit;padding:10px;max-width:100%}.steps{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}.steps span{padding:7px 12px;border:1px solid #d6deee;border-radius:5px;color:#63728e}.steps .done{background:#e5f7ef;color:#087a50;border-color:#96ddbd}.steps .active{background:#e9efff;color:#2457eb;border-color:#a8bfff}summary{cursor:pointer;color:#2457eb}#sheet-title{white-space:pre-line;font-weight:600}
+</style>
+<header><h1>Dashboard theo dõi nhiệm vụ</h1><div>Tiến độ dự án đầu tư công · tỉnh Đắk Lắk</div></header>
+<main>
+<section class="panel"><label for="source">Liên kết Google Sheets</label><input id="source" type="url" value="https://docs.google.com/spreadsheets/d/16uQcVic-o3o_fNVGF03KCCqaklthVr2j/edit"><div class="tools"><button id="load">Tải dữ liệu</button><label>Hoặc mở CSV <input id="file" type="file" accept=".csv,text/csv"></label></div><p id="status" role="status">Chưa có dữ liệu. Bảng tính cần cho phép đọc công khai; bạn cũng có thể xuất CSV rồi mở tại đây.</p></section>
+<section class="panel"><p id="sheet-title"></p><span class="count" id="count">0</span> dự án <label for="search">Tìm kiếm trong tất cả nội dung</label><input id="search" type="search" placeholder="Nhập nhiệm vụ, cơ quan, tiến độ…"><label for="group">Nguồn vốn</label><select id="group"><option value="">Tất cả nguồn vốn</option></select><p><small id="columns">Các cột sẽ xuất hiện sau khi đọc bảng tính.</small></p></section>
+<p><small>Tiến độ: xanh lá = ô đánh dấu “x”; xanh dương = có mô tả; ô trống = chưa có dữ liệu. Đây là giá trị trong bảng tính, không phải tỷ lệ hoàn thành suy đoán.</small></p><section class="cards" id="cards" aria-label="Dữ liệu bảng tính"></section>
+</main>
+<script src="app.js"></script>
+</html>
