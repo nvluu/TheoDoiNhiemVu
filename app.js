@@ -114,7 +114,7 @@ if (typeof document !== 'undefined') {
     el('status').textContent = 'Đang đọc dữ liệu trực tiếp từ hai tab Google Sheets…';
     try {
       const texts = await Promise.all([loadSheet('1434454130', 'A4:J'), loadSheet('1315345358', 'A3:E')]);
-      if (current === request) accept(...texts, `Google Sheets · cập nhật lúc ${new Date().toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'})} · tự kiểm tra mỗi phút`);
+      if (current === request) accept(...texts, `Google Sheets · cập nhật lúc ${new Date().toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'})}`);
     } catch (error) {
       if (current !== request) return;
       if (!data) {
@@ -123,22 +123,13 @@ if (typeof document !== 'undefined') {
           if (current !== request) return;
           accept(...texts, 'bản lưu dự phòng ngày 08/10/2026');
         } catch (fallbackError) {
-          if (current === request) el('status').textContent = `${error.message} ${fallbackError.message} Sẽ tự thử lại mỗi phút.`;
+          if (current === request) el('status').textContent = `${error.message} ${fallbackError.message} Bấm “Cập nhật ngay” để thử lại.`;
           return;
         }
       }
-      if (current === request) el('status').textContent = `${error.message} Đang giữ dữ liệu gần nhất hoặc bản lưu dự phòng, chưa cập nhật trực tiếp. Sẽ tự thử lại mỗi phút.`;
+      if (current === request) el('status').textContent = `${error.message} Đang giữ dữ liệu gần nhất hoặc bản lưu dự phòng, chưa cập nhật trực tiếp. Bấm “Cập nhật ngay” để thử lại.`;
     } finally { loading = false; el('load').disabled = false; }
   }
   el('load').addEventListener('click', refresh);
-  el('import').addEventListener('click', async () => {
-    const tasks = el('task-file').files[0], units = el('unit-file').files[0];
-    if (!tasks || !units) { el('status').textContent = 'Hãy chọn cả CSV nhiệm vụ (Trang tính4) và CSV đơn vị (Trang tính3).'; return; }
-    const current = ++request;
-    try { const texts = await Promise.all([tasks.text(), units.text()]); if (current === request) accept(...texts, 'hai file CSV đã chọn'); }
-    catch (error) { if (current === request) el('status').textContent = `${error.message} Dữ liệu đang hiển thị được giữ lại.`; }
-  });
   refresh();
-  setInterval(() => { if (!document.hidden) refresh(); }, 60000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 }

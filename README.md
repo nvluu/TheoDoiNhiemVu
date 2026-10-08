@@ -5,9 +5,9 @@ Web tĩnh dùng hai tab trong Google Sheets `1nxTlfSaB0POG4OY9zL0QmA1qa0ZIr4foaW
 - Trang tính4 (`gid=1434454130`): 65 nhiệm vụ, 10 cột thông tin gốc.
 - Trang tính3 (`gid=1315345358`): 11 đơn vị, người phụ trách, Gmail và SĐT.
 
-Trang tự đọc cả hai tab qua Google Visualization Query (JSONP) khi mở, kiểm tra lại mỗi 60 giây khi trang đang hiển thị và khi quay lại tab trình duyệt. Nút “Cập nhật ngay” đọc lại theo yêu cầu. Không cần xuất CSV hoặc triển khai lại web khi sửa dữ liệu bảng tính. Bảng tính phải cho phép đọc công khai; thay đổi có thể có độ trễ do bộ nhớ đệm của Google.
+Trang tự đọc cả hai tab qua Google Visualization Query (JSONP) khi mở trang. Nút “Cập nhật ngay” đọc lại theo yêu cầu. Không cần xuất CSV hoặc triển khai lại web khi sửa dữ liệu bảng tính. Bảng tính phải cho phép đọc công khai; thay đổi có thể có độ trễ do bộ nhớ đệm của Google.
 
-Dữ liệu từ cả hai tab chỉ được áp dụng khi cùng tải và kiểm tra thành công. Giữ bộ lọc/tìm kiếm qua các lần cập nhật. Nếu kết nối lỗi, giữ dữ liệu đang có; khi mở lần đầu mà không kết nối được, dùng `data.csv` và `units.csv` (bản dự phòng ngày 08/10/2026). Hiển thị rõ nguồn dự phòng và tự thử lại mỗi phút. Vẫn có thể mở hai CSV thủ công. Dữ liệu dự án cũ đã được thay thế.
+Dữ liệu từ cả hai tab chỉ được áp dụng khi cùng tải và kiểm tra thành công. Giữ bộ lọc/tìm kiếm qua các lần cập nhật. Nếu kết nối lỗi, giữ dữ liệu đang có; khi mở lần đầu mà không kết nối được, dùng `data.csv` và `units.csv` (bản dự phòng ngày 08/10/2026). Hiển thị rõ nguồn dự phòng; bấm “Cập nhật ngay” để thử lại. Không cập nhật định kỳ hoặc khi chuyển lại tab trình duyệt. Dữ liệu dự án cũ đã được thay thế.
 
 Truy vấn nhiệm vụ dùng `gid=1434454130`, `range=A4:J`, `headers=1`; danh mục đơn vị dùng `gid=1315345358`, `range=A3:E`, `headers=1`. Nếu di chuyển dòng tiêu đề hoặc các cột, cần cập nhật phạm vi đọc. Endpoint cố định tại docs.google.com, không dùng proxy bên thứ ba. Nội dung ô được hiển thị bằng textContent.
 
