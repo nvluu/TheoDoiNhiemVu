@@ -34,10 +34,16 @@ function readData(taskText, unitText) {
   if (!records.length || !directory.length) throw new Error('Bảng tính chưa có nhiệm vụ hoặc đơn vị.');
   return {headers: tasks.headers, records, units: directory, title: tasks.title};
 }
-if (typeof module !== 'undefined') module.exports = {parseCSV, readData};
+function sheetCSV(response) {
+  if (response.status !== 'ok' || !response.table?.cols || !response.table?.rows) throw new Error('Google Sheets không trả về dữ liệu hợp lệ. Kiểm tra quyền chia sẻ công khai.');
+  const {cols, rows} = response.table;
+  const values = [cols.map(c => c.label), ...rows.map(row => cols.map((_, i) => row.c[i]?.f ?? row.c[i]?.v ?? ''))];
+  return values.map(row => row.map(value => '"' + String(value).replaceAll('"', '""') + '"').join(',')).join('\n');
+}
+if (typeof module !== 'undefined') module.exports = {parseCSV, readData, sheetCSV};
 if (typeof document !== 'undefined') {
   const el = id => document.getElementById(id);
-  let data, request = 0;
+  let data, request = 0, loading = false, callbackId = 0;
   const node = (tag, text, className) => { const n = document.createElement(tag); n.textContent = text; if (className) n.className = className; return n; };
   function render() {
     if (!data) return;
@@ -63,6 +69,7 @@ if (typeof document !== 'undefined') {
   }
   function accept(taskText, unitText, source) {
     const next = readData(taskText, unitText); data = next;
+    const selectedGroup = el('group').value, selectedState = el('state').value;
     el('sheet-title').textContent = data.title;
     el('group').replaceChildren(new Option('Tất cả đơn vị', ''));
     for (const code of new Set(data.records.map(r => r.row[1].trim()))) {
@@ -71,6 +78,8 @@ if (typeof document !== 'undefined') {
     }
     el('state').replaceChildren(new Option('Tất cả trạng thái', ''));
     for (const state of new Set(data.records.map(r => r.row[6].trim()))) el('state').add(new Option(state || 'Chưa có trạng thái', state || '__missing'));
+    if ([...el('group').options].some(o => o.value === selectedGroup)) el('group').value = selectedGroup;
+    if ([...el('state').options].some(o => o.value === selectedState)) el('state').value = selectedState;
     const body = el('units'); body.replaceChildren();
     for (const unit of data.units) { const row = node('tr', ''); unit.slice(0, 5).forEach(value => row.append(node('td', value || '—'))); body.append(row); }
     el('unit-count').textContent = data.units.length;
@@ -82,15 +91,46 @@ if (typeof document !== 'undefined') {
     finally { clearTimeout(timer); }
   }
   ['search', 'group', 'state'].forEach(id => el(id).addEventListener(id === 'search' ? 'input' : 'change', render));
-  el('load').addEventListener('click', async () => {
-    const current = ++request; el('load').disabled = true; el('status').textContent = 'Đang tải cả hai tab Google Sheets…';
+  function loadSheet(gid, range) {
+    return new Promise((resolve, reject) => {
+      const callback = `sheetResponse_${Date.now()}_${++callbackId}`, script = document.createElement('script');
+      const url = new URL('https://docs.google.com/spreadsheets/d/1nxTlfSaB0POG4OY9zL0QmA1qa0ZIr4foaWOIghDy3ks/gviz/tq');
+      url.search = new URLSearchParams({gid, range, headers: '1', tqx: `out:json;responseHandler:${callback}`, _: Date.now()});
+      let timer;
+      function cleanup() {
+        clearTimeout(timer); script.remove();
+        // A timed-out response can arrive late; leave a temporary no-op callback.
+        window[callback] = () => {}; setTimeout(() => delete window[callback], 60000);
+      }
+      window[callback] = response => { cleanup(); try { resolve(sheetCSV(response)); } catch (error) { reject(error); } };
+      script.onerror = () => { cleanup(); reject(new Error('Không kết nối được Google Sheets.')); };
+      timer = setTimeout(() => { cleanup(); reject(new Error('Google Sheets phản hồi quá lâu.')); }, 20000);
+      script.src = url.href; document.head.append(script);
+    });
+  }
+  async function refresh() {
+    if (loading) return;
+    loading = true; const current = ++request; el('load').disabled = true;
+    el('status').textContent = 'Đang đọc dữ liệu trực tiếp từ hai tab Google Sheets…';
     try {
-      const base = 'https://docs.google.com/spreadsheets/d/1nxTlfSaB0POG4OY9zL0QmA1qa0ZIr4foaWOIghDy3ks/export?format=csv&gid=';
-      const [tasks, units] = await Promise.all([fetchCSV(base + '1434454130'), fetchCSV(base + '1315345358')]);
-      if (current === request) accept(tasks, units, 'Google Sheets vừa tải');
-    } catch (error) { if (current === request) el('status').textContent = `${error.message} Không tải được cả hai tab. Dữ liệu đang hiển thị được giữ lại; có thể mở hai file CSV xuất từ bảng tính.`; }
-    finally { el('load').disabled = false; }
-  });
+      const texts = await Promise.all([loadSheet('1434454130', 'A4:J'), loadSheet('1315345358', 'A3:E')]);
+      if (current === request) accept(...texts, `Google Sheets · cập nhật lúc ${new Date().toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'})} · tự kiểm tra mỗi phút`);
+    } catch (error) {
+      if (current !== request) return;
+      if (!data) {
+        try {
+          const texts = await Promise.all([fetchCSV('data.csv'), fetchCSV('units.csv')]);
+          if (current !== request) return;
+          accept(...texts, 'bản lưu dự phòng ngày 08/10/2026');
+        } catch (fallbackError) {
+          if (current === request) el('status').textContent = `${error.message} ${fallbackError.message} Sẽ tự thử lại mỗi phút.`;
+          return;
+        }
+      }
+      if (current === request) el('status').textContent = `${error.message} Đang giữ dữ liệu gần nhất hoặc bản lưu dự phòng, chưa cập nhật trực tiếp. Sẽ tự thử lại mỗi phút.`;
+    } finally { loading = false; el('load').disabled = false; }
+  }
+  el('load').addEventListener('click', refresh);
   el('import').addEventListener('click', async () => {
     const tasks = el('task-file').files[0], units = el('unit-file').files[0];
     if (!tasks || !units) { el('status').textContent = 'Hãy chọn cả CSV nhiệm vụ (Trang tính4) và CSV đơn vị (Trang tính3).'; return; }
@@ -98,6 +138,7 @@ if (typeof document !== 'undefined') {
     try { const texts = await Promise.all([tasks.text(), units.text()]); if (current === request) accept(...texts, 'hai file CSV đã chọn'); }
     catch (error) { if (current === request) el('status').textContent = `${error.message} Dữ liệu đang hiển thị được giữ lại.`; }
   });
-  Promise.all([fetchCSV('data.csv'), fetchCSV('units.csv')]).then(([tasks, units]) => { if (request === 0) accept(tasks, units, 'bản lưu hai tab ngày 08/10/2026'); })
-    .catch(error => { if (request === 0) el('status').textContent = error.message; });
+  refresh();
+  setInterval(() => { if (!document.hidden) refresh(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 }
