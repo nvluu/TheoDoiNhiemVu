@@ -18,85 +18,86 @@ function parseCSV(text) {
   if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
   return rows.filter(r => r.some(v => v.trim()));
 }
-function readProjects(text) {
+function readTable(text, firstHeader) {
+  if (/^\s*</.test(text)) throw new Error('Nguồn trả về HTML thay vì CSV.');
   const rows = parseCSV(text);
-  const index = rows.findIndex(r => r[0].trim() === 'STT' && r[1]?.trim() === 'Tên dự án');
-  if (index < 0) throw new Error('Không tìm thấy dòng tiêu đề STT, Tên dự án.');
-  let group = 'Khác'; const projects = [];
-  for (const row of rows.slice(index + 1)) {
-    if (/^[A-Z]$/.test(row[0].trim())) { group = row[1]; continue; }
-    if (/^\d+$/.test(row[0].trim()) && row[1]?.trim()) projects.push([...row, group]);
-  }
-  return {headers: [...rows[index], 'Nguồn vốn'], records: projects, title: rows[0][0]};
+  const index = rows.findIndex(row => row[0].trim() === firstHeader);
+  if (index < 0) throw new Error(`Không tìm thấy tiêu đề ${firstHeader}.`);
+  return { headers: rows[index], rows: rows.slice(index + 1), title: rows.slice(0, index).map(r => r[0]).join(' · ') };
 }
-if (typeof module !== 'undefined') module.exports = { parseCSV, readProjects };
+function readData(taskText, unitText) {
+  const tasks = readTable(taskText, 'STT'), units = readTable(unitText, 'Mã Đơn vị');
+  if (tasks.headers[2]?.trim() !== 'TÊN NHIỆM VỤ' || units.headers[1]?.trim() !== 'Tên đơn vị') throw new Error('Cấu trúc bảng tính không đúng.');
+  const directory = units.rows.filter(r => r[0]?.trim() && r[1]?.trim());
+  const byCode = new Map(directory.map(r => [r[0].trim(), r]));
+  const records = tasks.rows.filter(r => /^\d+$/.test(r[0].trim()) && r[2]?.trim()).map(row => ({row, unit: byCode.get(row[1].trim())}));
+  if (!records.length || !directory.length) throw new Error('Bảng tính chưa có nhiệm vụ hoặc đơn vị.');
+  return {headers: tasks.headers, records, units: directory, title: tasks.title};
+}
+if (typeof module !== 'undefined') module.exports = {parseCSV, readData};
 if (typeof document !== 'undefined') {
   const el = id => document.getElementById(id);
-  let headers = [], records = [], request = 0;
+  let data, request = 0;
+  const node = (tag, text, className) => { const n = document.createElement(tag); n.textContent = text; if (className) n.className = className; return n; };
   function render() {
-    const query = el('search').value.toLocaleLowerCase('vi');
-    const filtered = records.filter(row => row.join(' ').toLocaleLowerCase('vi').includes(query) && (!el('group').value || row[row.length - 1] === el('group').value));
-    el('count').textContent = `${filtered.length}/${records.length}`;
+    if (!data) return;
+    const query = el('search').value.toLocaleLowerCase('vi').trim();
+    const filtered = data.records.filter(({row, unit}) => [...row, ...(unit || [])].join(' ').toLocaleLowerCase('vi').includes(query) && (!el('group').value || (row[1].trim() || '__missing') === el('group').value) && (!el('state').value || (row[6].trim() || '__missing') === el('state').value));
+    el('count').textContent = `${filtered.length}/${data.records.length}`;
     el('cards').replaceChildren();
-    for (const row of filtered) {
-      const card = document.createElement('article'), title = document.createElement('h3'), list = document.createElement('dl');
-      title.textContent = row[1] || 'Dự án'; card.append(title);
-      headers.forEach((name, i) => {
-        const key = document.createElement('dt'), value = document.createElement('dd');
-        key.textContent = name; value.textContent = row[i] || '—'; list.append(key, value);
-      });
-      const details = document.createElement('details'), summary = document.createElement('summary');
-      summary.textContent = 'Chi tiết dự án và 12 bước tiến độ'; details.append(summary, list);
-      const group = document.createElement('p'); group.className = 'badge'; group.textContent = row[row.length - 1];
-      const info = document.createElement('p'); info.textContent = `${row[3].trim()} · ${row[4]} · ${row[2]} triệu đồng`;
-      const steps = document.createElement('div'); steps.className = 'steps';
-      row.slice(6, 18).forEach((value, i) => {
-        const step = document.createElement('span'); step.textContent = `B${i + 1}`;
-        step.className = value.trim().toLowerCase() === 'x' ? 'done' : value.trim() ? 'active' : '';
-        step.title = `Bước ${i + 1}: ${value || 'Chưa có dữ liệu'}`; steps.append(step);
-      });
-      card.append(group, info, steps, details); el('cards').append(card);
+    for (const {row, unit} of filtered) {
+      const card = node('article', ''), badges = node('div', '', 'tools');
+      badges.append(node('span', unit ? `${row[1]} · ${unit[1]}` : row[1] ? `${row[1]} · Chưa có trong danh mục đơn vị` : 'Chưa có mã đơn vị', 'badge'));
+      const status = row[6].trim();
+      badges.append(node('span', status || 'Chưa có trạng thái', 'badge ' + (/^(Đã hoàn thành|Hoàn thành)$/i.test(status) ? 'done' : status === 'Trễ hạn' ? 'late' : 'active')));
+      card.append(badges, node('h3', `${row[0]}. ${row[2]}`));
+      card.append(node('p', `Thời hạn: ${row[4] || 'Chưa có dữ liệu'} · Lãnh đạo phụ trách: ${row[5] || 'Chưa có dữ liệu'}`));
+      if (row[9]) card.append(node('p', `Ghi chú: ${row[9]}`, row[9].trim() === 'Trễ hạn' ? 'late' : ''));
+      card.append(node('h4', 'Tiến độ, kết quả thực hiện'), node('p', row[8] || 'Chưa có dữ liệu', 'progress'));
+      const details = node('details', ''), list = node('dl', '');
+      data.headers.forEach((name, i) => list.append(node('dt', name), node('dd', row[i] || '—')));
+      if (unit) ['Tên đơn vị', 'Người phụ trách đơn vị', 'Gmail', 'SĐT'].forEach((name, i) => list.append(node('dt', name), node('dd', unit[i + 1] || '—')));
+      details.append(node('summary', 'Xem đầy đủ thông tin nhiệm vụ'), list); card.append(details); el('cards').append(card);
     }
+    el('empty').hidden = filtered.length > 0;
   }
-  function accept(text, source) {
-    if (/^\s*</.test(text)) throw new Error('Nguồn trả về trang HTML thay vì CSV. Kiểm tra quyền chia sẻ bảng tính.');
-    const data = readProjects(text);
-    headers = data.headers; records = data.records;
+  function accept(taskText, unitText, source) {
+    const next = readData(taskText, unitText); data = next;
     el('sheet-title').textContent = data.title;
-    el('group').replaceChildren(new Option('Tất cả nguồn vốn', ''));
-    for (const group of new Set(records.map(r => r[r.length - 1]))) el('group').add(new Option(group, group));
-    render();
-    el('columns').textContent = headers.join(' · ');
-    el('status').textContent = `Đã đọc ${records.length} bản ghi từ ${source}. Dữ liệu gốc được giữ nguyên.`;
+    el('group').replaceChildren(new Option('Tất cả đơn vị', ''));
+    for (const code of new Set(data.records.map(r => r.row[1].trim()))) {
+      const unit = data.units.find(r => r[0].trim() === code);
+      el('group').add(new Option(unit ? `${code} · ${unit[1]}` : code || 'Chưa có mã đơn vị', code || '__missing'));
+    }
+    el('state').replaceChildren(new Option('Tất cả trạng thái', ''));
+    for (const state of new Set(data.records.map(r => r.row[6].trim()))) el('state').add(new Option(state || 'Chưa có trạng thái', state || '__missing'));
+    const body = el('units'); body.replaceChildren();
+    for (const unit of data.units) { const row = node('tr', ''); unit.slice(0, 5).forEach(value => row.append(node('td', value || '—'))); body.append(row); }
+    el('unit-count').textContent = data.units.length;
+    render(); el('status').textContent = `Đã đọc ${data.records.length} nhiệm vụ và ${data.units.length} đơn vị từ ${source}.`;
   }
-  el('search').addEventListener('input', render);
-  el('group').addEventListener('change', render);
-  el('file').addEventListener('change', async e => {
-    const file = e.target.files[0]; if (!file) return;
-    const current = ++request;
-    try { const text = await file.text(); if (current === request) accept(text, file.name); }
-    catch (error) { if (current === request) el('status').textContent = error.message; }
-  });
+  async function fetchCSV(url) {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
+    try { const response = await fetch(url, {signal: controller.signal}); if (!response.ok) throw new Error(`Nguồn dữ liệu trả về lỗi ${response.status}.`); return await response.text(); }
+    finally { clearTimeout(timer); }
+  }
+  ['search', 'group', 'state'].forEach(id => el(id).addEventListener(id === 'search' ? 'input' : 'change', render));
   el('load').addEventListener('click', async () => {
-    const current = ++request; el('load').disabled = true;
-    el('status').textContent = 'Đang tải dữ liệu…';
+    const current = ++request; el('load').disabled = true; el('status').textContent = 'Đang tải cả hai tab Google Sheets…';
     try {
-      const source = new URL(el('source').value);
-      const match = source.pathname.match(/^\/spreadsheets\/d\/([\w-]+)/);
-      if (source.hostname !== 'docs.google.com' || !match) throw new Error('Hãy nhập liên kết Google Sheets hợp lệ.');
-      const fragment = new URLSearchParams(source.hash.slice(1));
-      const gid = source.searchParams.get('gid') || fragment.get('gid') || '0';
-      const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 20000);
-      let response;
-      try { response = await fetch(`https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`, {signal: controller.signal}); }
-      finally { clearTimeout(timeout); }
-      if (!response.ok) throw new Error(`Google Sheets trả về lỗi ${response.status}.`);
-      const text = await response.text(); if (current === request) accept(text, 'Google Sheets');
-    } catch (error) {
-      if (current === request) el('status').textContent = `${error.message} Không tải được bảng tính. Kiểm tra quyền chia sẻ hoặc xuất CSV và mở bằng nút phía trên. Dữ liệu đã tải trước đó (nếu có) vẫn được giữ lại.`;
-    } finally { el('load').disabled = false; }
+      const base = 'https://docs.google.com/spreadsheets/d/1nxTlfSaB0POG4OY9zL0QmA1qa0ZIr4foaWOIghDy3ks/export?format=csv&gid=';
+      const [tasks, units] = await Promise.all([fetchCSV(base + '1434454130'), fetchCSV(base + '1315345358')]);
+      if (current === request) accept(tasks, units, 'Google Sheets vừa tải');
+    } catch (error) { if (current === request) el('status').textContent = `${error.message} Không tải được cả hai tab. Dữ liệu đang hiển thị được giữ lại; có thể mở hai file CSV xuất từ bảng tính.`; }
+    finally { el('load').disabled = false; }
   });
-  fetch('data.csv').then(r => { if (!r.ok) throw new Error('Không đọc được dữ liệu đã lưu.'); return r.text(); })
-    .then(text => { if (request === 0) accept(text, 'bản dữ liệu Google Sheets đã lưu ngày 06/10/2026'); })
+  el('import').addEventListener('click', async () => {
+    const tasks = el('task-file').files[0], units = el('unit-file').files[0];
+    if (!tasks || !units) { el('status').textContent = 'Hãy chọn cả CSV nhiệm vụ (Trang tính4) và CSV đơn vị (Trang tính3).'; return; }
+    const current = ++request;
+    try { const texts = await Promise.all([tasks.text(), units.text()]); if (current === request) accept(...texts, 'hai file CSV đã chọn'); }
+    catch (error) { if (current === request) el('status').textContent = `${error.message} Dữ liệu đang hiển thị được giữ lại.`; }
+  });
+  Promise.all([fetchCSV('data.csv'), fetchCSV('units.csv')]).then(([tasks, units]) => { if (request === 0) accept(tasks, units, 'bản lưu hai tab ngày 08/10/2026'); })
     .catch(error => { if (request === 0) el('status').textContent = error.message; });
 }
