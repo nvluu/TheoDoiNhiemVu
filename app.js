@@ -52,6 +52,8 @@ if (typeof document !== 'undefined') {
     const query = el('search').value.toLocaleLowerCase('vi').trim();
     const filtered = data.records.filter(({row, unit}) => [...row, ...(unit || [])].join(' ').toLocaleLowerCase('vi').includes(query) && (!el('group').value || (row[1].trim() || '__missing') === el('group').value) && (!el('state').value || (row[6].trim() || '__missing') === el('state').value));
     el('count').textContent = `${filtered.length}/${data.records.length}`;
+    el('completed-count').textContent = filtered.filter(({row}) => /^(Đã hoàn thành|Hoàn thành)$/i.test(row[6].trim())).length;
+    el('overdue-count').textContent = filtered.filter(({row}) => [row[6], row[9]].some(value => /^(Trễ hạn|Quá hạn)$/i.test((value || '').trim()))).length;
     el('cards').replaceChildren();
     for (const {row, unit} of filtered) {
       const card = node('article', ''), badges = node('div', '', 'tools');
