@@ -5,7 +5,7 @@ Web tĩnh dùng hai tab trong Google Sheets `1nxTlfSaB0POG4OY9zL0QmA1qa0ZIr4foaW
 - Trang tính4 (`gid=1434454130`): 65 nhiệm vụ, 10 cột thông tin gốc.
 - Trang tính3 (`gid=1315345358`): 11 đơn vị, người phụ trách, Gmail và SĐT.
 
-Trang tự đọc cả hai tab qua Google Visualization Query (JSONP) khi mở trang. Nút “Cập nhật ngay” đọc lại theo yêu cầu. Không cần xuất CSV hoặc triển khai lại web khi sửa dữ liệu bảng tính. Bảng tính phải cho phép đọc công khai; thay đổi có thể có độ trễ do bộ nhớ đệm của Google.
+Khi mở trang, ưu tiên cache hợp lệ trong localStorage của trình duyệt và hiển thị ngay, không gửi yêu cầu Google Sheets. Nếu chưa có cache hoặc cache lỗi, đọc cả hai tab qua Google Visualization Query (JSONP). Nút “Cập nhật ngay” đọc lại Google Sheets và thay cache sau khi cả hai tab được kiểm tra thành công. Cache không tự hết hạn; hiển thị thời điểm lưu để người dùng biết độ mới. Nếu trình duyệt chặn hoặc đầy bộ nhớ, vẫn hiển thị dữ liệu và thông báo không lưu được cache. Không cần xuất CSV hoặc triển khai lại web khi sửa dữ liệu bảng tính. Bảng tính phải cho phép đọc công khai; thay đổi có thể có độ trễ do bộ nhớ đệm của Google.
 
 Dữ liệu từ cả hai tab chỉ được áp dụng khi cùng tải và kiểm tra thành công. Giữ bộ lọc/tìm kiếm qua các lần cập nhật. Nếu kết nối lỗi, giữ dữ liệu đang có; khi mở lần đầu mà không kết nối được, dùng `data.csv` và `units.csv` (bản dự phòng ngày 08/10/2026). Hiển thị rõ nguồn dự phòng; bấm “Cập nhật ngay” để thử lại. Không cập nhật định kỳ hoặc khi chuyển lại tab trình duyệt. Dữ liệu dự án cũ đã được thay thế.
 

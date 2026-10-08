@@ -43,6 +43,8 @@ function sheetCSV(response) {
 if (typeof module !== 'undefined') module.exports = {parseCSV, readData, sheetCSV};
 if (typeof document !== 'undefined') {
   const el = id => document.getElementById(id);
+  const cacheKey = 'task-dashboard:1nxTlfSaB0POG4OY9zL0QmA1qa0ZIr4foaWOIghDy3ks:v1';
+  const displayTime = time => new Date(time).toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'});
   let data, request = 0, loading = false, callbackId = 0;
   const node = (tag, text, className) => { const n = document.createElement(tag); n.textContent = text; if (className) n.className = className; return n; };
   function render() {
@@ -114,7 +116,15 @@ if (typeof document !== 'undefined') {
     el('status').textContent = 'Đang đọc dữ liệu trực tiếp từ hai tab Google Sheets…';
     try {
       const texts = await Promise.all([loadSheet('1434454130', 'A4:J'), loadSheet('1315345358', 'A3:E')]);
-      if (current === request) accept(...texts, `Google Sheets · cập nhật lúc ${new Date().toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'})}`);
+      if (current === request) {
+        const savedAt = new Date().toISOString();
+        accept(...texts, `Google Sheets · cập nhật lúc ${displayTime(savedAt)}`);
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({version: 1, tasks: texts[0], units: texts[1], savedAt}));
+        } catch {
+          el('status').textContent += ' Không lưu được bộ nhớ trình duyệt; lần mở sau sẽ tải lại Google Sheets.';
+        }
+      }
     } catch (error) {
       if (current !== request) return;
       if (!data) {
@@ -131,5 +141,13 @@ if (typeof document !== 'undefined') {
     } finally { loading = false; el('load').disabled = false; }
   }
   el('load').addEventListener('click', refresh);
-  refresh();
+  function openCache() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey));
+      if (!cached || cached.version !== 1 || typeof cached.tasks !== 'string' || typeof cached.units !== 'string' || typeof cached.savedAt !== 'string' || !Number.isFinite(Date.parse(cached.savedAt))) return false;
+      accept(cached.tasks, cached.units, `bộ nhớ trình duyệt · lưu lúc ${displayTime(cached.savedAt)} · bấm “Cập nhật ngay” để lấy dữ liệu mới`);
+      return true;
+    } catch { return false; }
+  }
+  if (!openCache()) refresh();
 }
