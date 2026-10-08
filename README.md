@@ -22,3 +22,5 @@ python3 -m http.server 8000 --bind 0.0.0.0
 Kiểm tra trang hiển thị 65/65 nhiệm vụ và 11 đơn vị, tìm kiếm/lọc hoạt động và chi tiết giữ đúng dữ liệu hai tab.
 
 Thẻ thứ hai hiển thị tổng số, số nhiệm vụ hoàn thành và quá hạn theo danh sách đang lọc. Hoàn thành gồm trạng thái “Đã hoàn thành” / “Hoàn thành”; quá hạn gồm trạng thái hoặc ghi chú “Trễ hạn” / “Quá hạn”, mỗi nhiệm vụ chỉ được đếm một lần trong mỗi chỉ số. Không suy luận ngày từ thời hạn dạng văn bản.
+
+Khi thay đổi `app.js`, cập nhật tham số `v` của script trong `index.html` theo SHA-256 của nội dung file (12 ký tự đầu) để trình duyệt tải mã mới. Cache dữ liệu localStorage vẫn được giữ; nút Cập nhật ngay chỉ tải lại dữ liệu Google Sheets.
