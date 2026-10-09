@@ -8,6 +8,7 @@
 .cards{grid-template-columns:1fr}.badge{color:#126253;font-size:13px}select{font:inherit;padding:10px;max-width:100%}.steps{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}.steps span{padding:7px 12px;border:1px solid #d6deee;border-radius:5px;color:#63728e}.steps .done{background:#e5f7ef;color:#087a50;border-color:#96ddbd}.steps .active{background:#e9efff;color:#2457eb;border-color:#a8bfff}summary{cursor:pointer;color:#2457eb}#sheet-title{white-space:pre-line;font-weight:600}
 .badge{display:inline-block;background:#eef3fa;padding:6px 10px;border-radius:6px}.done{background:#e5f7ef;color:#087a50}.active{background:#e9efff;color:#2457eb}.late{color:#b42318}.progress{white-space:pre-wrap;line-height:1.6}article h3{margin-top:16px;line-height:1.5}h4{margin-bottom:8px}.directory{margin-top:24px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:12px;border-bottom:1px solid #d6deee}a{color:#2457eb}
 .statistics{display:flex;flex-wrap:wrap;gap:12px}.statistics>div{flex:1;min-width:140px;padding:16px;background:#f3f6fc;border:1px solid #d6deee;border-radius:8px}.statistics span{display:block}.statistics .stat-completed{background:#e5f7ef;color:#087a50}.statistics .stat-overdue{background:#fff0ed;color:#b42318}
+.cards .badge{font-size:16px;font-weight:700;line-height:1.5;color:#0b5144}.cards .badge.active{color:#173fa8}.cards .badge.done{color:#065c3c}.cards .badge.late,.cards .task-note.late{color:#991b1b}.cards .task-meta,.cards .task-note{font-size:18px;font-weight:600;line-height:1.6}.cards .task-meta,.cards .task-note:not(.late){color:#14233c}
 </style>
 <header><h1>Dashboard theo dõi nhiệm vụ</h1><div>Nhiệm vụ trọng tâm và nhiệm vụ cấp có thẩm quyền giao</div></header>
 <main>
@@ -16,5 +17,5 @@
 <p><small>Trạng thái, thời hạn và ghi chú được giữ nguyên theo bảng tính. Thông tin đơn vị được ghép theo mã; mã thiếu hoặc không khớp được hiển thị riêng. Khi mở trang, hiển thị dữ liệu đã lưu trong trình duyệt; nếu chưa có thì đọc Google Sheets. Bấm “Cập nhật ngay” để lấy dữ liệu mới. Khi mất kết nối, trang giữ dữ liệu gần nhất hoặc dùng bản lưu dự phòng.</small></p><p id="empty" hidden>Không có nhiệm vụ phù hợp.</p><section class="cards" id="cards" aria-label="Danh sách nhiệm vụ"></section>
 <section class="panel directory"><h2>Danh mục đơn vị (<span id="unit-count">0</span>)</h2><div class="table-wrap"><table><thead><tr><th>Mã đơn vị</th><th>Tên đơn vị</th><th>Người phụ trách</th><th>Gmail</th><th>SĐT</th></tr></thead><tbody id="units"></tbody></table></div></section>
 </main>
-<script src="app.js?v=73afc5b64782"></script>
+<script src="app.js?v=230a65f17071"></script>
 </html>

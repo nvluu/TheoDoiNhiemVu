@@ -61,8 +61,8 @@ if (typeof document !== 'undefined') {
       const status = row[6].trim();
       badges.append(node('span', status || 'Chưa có trạng thái', 'badge ' + (/^(Đã hoàn thành|Hoàn thành)$/i.test(status) ? 'done' : status === 'Trễ hạn' ? 'late' : 'active')));
       card.append(badges, node('h3', `${row[0]}. ${row[2]}`));
-      card.append(node('p', `Thời hạn: ${row[4] || 'Chưa có dữ liệu'} · Lãnh đạo phụ trách: ${row[5] || 'Chưa có dữ liệu'}`));
-      if (row[9]) card.append(node('p', `Ghi chú: ${row[9]}`, row[9].trim() === 'Trễ hạn' ? 'late' : ''));
+      card.append(node('p', `Thời hạn: ${row[4] || 'Chưa có dữ liệu'} · Lãnh đạo phụ trách: ${row[5] || 'Chưa có dữ liệu'}`, 'task-meta'));
+      if (row[9]) card.append(node('p', `Ghi chú: ${row[9]}`, 'task-note' + (row[9].trim() === 'Trễ hạn' ? ' late' : '')));
       card.append(node('h4', 'Tiến độ, kết quả thực hiện'), node('p', row[8] || 'Chưa có dữ liệu', 'progress'));
       const details = node('details', ''), list = node('dl', '');
       data.headers.forEach((name, i) => list.append(node('dt', name), node('dd', row[i] || '—')));
