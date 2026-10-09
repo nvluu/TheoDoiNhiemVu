@@ -25,4 +25,6 @@ Thẻ thứ hai hiển thị tổng số, số nhiệm vụ hoàn thành và qu�
 
 Khi thay đổi `app.js`, cập nhật tham số `v` của script trong `index.html` theo SHA-256 của nội dung file (12 ký tự đầu) để trình duyệt tải mã mới. Cache dữ liệu localStorage vẫn được giữ; nút Cập nhật ngay chỉ tải lại dữ liệu Google Sheets.
 
-Giao diện `giaodien2`: thanh điều hướng xanh, 5 ô thống kê, vòng tỷ lệ hoàn thành và top 5 đơn vị theo số nhiệm vụ. Biểu đồ/statistics cùng dùng danh sách đang lọc; các nhóm trạng thái có thể chồng lấp (nhiệm vụ đang thực hiện có thể có ghi chú quá hạn). Nút Xóa bộ lọc khôi phục toàn bộ danh sách. CSS nằm trong `dashboard.css`. Cache và cập nhật thủ công giữ nguyên.
+Giao diện `giaodien2`: thanh điều hướng xanh, 5 ô thống kê, vòng tỷ lệ hoàn thành và toàn bộ đơn vị theo số nhiệm vụ trong vùng cuộn. Biểu đồ/statistics cùng dùng danh sách đang lọc; các nhóm trạng thái có thể chồng lấp (nhiệm vụ đang thực hiện có thể có ghi chú quá hạn). Nút Xóa bộ lọc khôi phục toàn bộ danh sách. CSS nằm trong `dashboard.css`. Cache và cập nhật thủ công giữ nguyên.
+
+Biểu đồ đơn vị hiển thị cả các đơn vị có 0 nhiệm vụ, mã chưa có trong danh mục và nhiệm vụ thiếu mã.
