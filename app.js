@@ -54,6 +54,31 @@ if (typeof document !== 'undefined') {
     el('count').textContent = `${filtered.length}/${data.records.length}`;
     el('completed-count').textContent = filtered.filter(({row}) => /^(Đã hoàn thành|Hoàn thành)$/i.test(row[6].trim())).length;
     el('overdue-count').textContent = filtered.filter(({row}) => [row[6], row[9]].some(value => /^(Trễ hạn|Quá hạn)$/i.test((value || '').trim()))).length;
+    const completed = Number(el('completed-count').textContent);
+    const overdue = Number(el('overdue-count').textContent);
+    const ongoing = filtered.filter(({row}) => /^Đang /i.test(row[6].trim())).length;
+    el('ongoing-count').textContent = ongoing;
+    el('filtered-units').textContent = new Set(filtered.map(({row}) => row[1].trim()).filter(Boolean)).size;
+    const percent = filtered.length ? Math.round(completed / filtered.length * 100) : 0;
+    el('completion-percent').textContent = `${percent}%`;
+    el('completion-ring').style.setProperty('--completion', `${percent}%`);
+    el('completion-caption').textContent = `${completed} hoàn thành / ${filtered.length} nhiệm vụ đang hiển thị`;
+    el('overview-note').textContent = overdue ? `${overdue} nhiệm vụ được đánh dấu trễ hạn hoặc quá hạn trong bảng tính.` : 'Danh sách đang hiển thị chưa có nhiệm vụ được đánh dấu quá hạn.';
+    const counts = new Map();
+    for (const {row, unit} of filtered) {
+      const name = unit?.[1] || row[1].trim() || 'Chưa có mã đơn vị';
+      counts.set(name, (counts.get(name) || 0) + 1);
+    }
+    const bars = el('unit-bars'); bars.replaceChildren();
+    const topUnits = [...counts].sort((a,b) => b[1] - a[1]).slice(0,5);
+    const largest = topUnits[0]?.[1] || 1;
+    for (const [name, count] of topUnits) {
+      const item = node('div', '', 'bar-item'), label = node('div', '', 'bar-label');
+      label.append(node('span', name), node('strong', String(count)));
+      const track = node('div', '', 'bar-track'), fill = node('div', '', 'bar-fill');
+      fill.style.width = `${count / largest * 100}%`; track.append(fill); item.append(label, track); bars.append(item);
+    }
+    if (!topUnits.length) bars.append(node('p', 'Chưa có nhiệm vụ phù hợp.', 'muted'));
     el('cards').replaceChildren();
     for (const {row, unit} of filtered) {
       const card = node('article', ''), badges = node('div', '', 'tools');
@@ -94,6 +119,7 @@ if (typeof document !== 'undefined') {
     try { const response = await fetch(url, {signal: controller.signal}); if (!response.ok) throw new Error(`Nguồn dữ liệu trả về lỗi ${response.status}.`); return await response.text(); }
     finally { clearTimeout(timer); }
   }
+  el('reset').addEventListener('click', () => { el('search').value = ''; el('group').value = ''; el('state').value = ''; render(); });
   ['search', 'group', 'state'].forEach(id => el(id).addEventListener(id === 'search' ? 'input' : 'change', render));
   function loadSheet(gid, range) {
     return new Promise((resolve, reject) => {
