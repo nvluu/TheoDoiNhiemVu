@@ -64,21 +64,21 @@ if (typeof document !== 'undefined') {
     el('completion-ring').style.setProperty('--completion', `${percent}%`);
     el('completion-caption').textContent = `${completed} hoàn thành / ${filtered.length} nhiệm vụ đang hiển thị`;
     el('overview-note').textContent = overdue ? `${overdue} nhiệm vụ được đánh dấu trễ hạn hoặc quá hạn trong bảng tính.` : 'Danh sách đang hiển thị chưa có nhiệm vụ được đánh dấu quá hạn.';
-    const counts = new Map();
+    const counts = new Map(data.units.map(unit => [unit[1], 0]));
     for (const {row, unit} of filtered) {
       const name = unit?.[1] || row[1].trim() || 'Chưa có mã đơn vị';
       counts.set(name, (counts.get(name) || 0) + 1);
     }
     const bars = el('unit-bars'); bars.replaceChildren();
-    const topUnits = [...counts].sort((a,b) => b[1] - a[1]).slice(0,5);
-    const largest = topUnits[0]?.[1] || 1;
-    for (const [name, count] of topUnits) {
+    const allUnits = [...counts].sort((a,b) => b[1] - a[1]);
+    const largest = allUnits[0]?.[1] || 1;
+    for (const [name, count] of allUnits) {
       const item = node('div', '', 'bar-item'), label = node('div', '', 'bar-label');
       label.append(node('span', name), node('strong', String(count)));
       const track = node('div', '', 'bar-track'), fill = node('div', '', 'bar-fill');
       fill.style.width = `${count / largest * 100}%`; track.append(fill); item.append(label, track); bars.append(item);
     }
-    if (!topUnits.length) bars.append(node('p', 'Chưa có nhiệm vụ phù hợp.', 'muted'));
+    if (!allUnits.length) bars.append(node('p', 'Chưa có nhiệm vụ phù hợp.', 'muted'));
     el('cards').replaceChildren();
     for (const {row, unit} of filtered) {
       const card = node('article', ''), badges = node('div', '', 'tools');
