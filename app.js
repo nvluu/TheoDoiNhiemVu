@@ -66,7 +66,7 @@ if (typeof document !== 'undefined') {
     const overdue = filtered.filter(({row}) => summaryMatches.__overdue(row)).length;
     const ongoing = matching.filter(({row}) => summaryMatches.__ongoing(row)).length;
     el('ongoing-count').textContent = ongoing;
-    el('filtered-units').textContent = new Set(filtered.map(({row}) => row[1].trim()).filter(Boolean)).size;
+    el('filtered-units').textContent = data.units.length;
     const percent = filtered.length ? Math.round(completed / filtered.length * 100) : 0;
     el('completion-percent').textContent = `${percent}%`;
     el('completion-ring').style.setProperty('--completion', `${percent}%`);
@@ -133,6 +133,13 @@ if (typeof document !== 'undefined') {
     render();
     el('task-list').scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
   }));
+  el('show-all-tasks').addEventListener('click', () => {
+    el('reset').click();
+    el('task-list').scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+  });
+  el('show-directory').addEventListener('click', () => {
+    el('directory').scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+  });
   el('reset').addEventListener('click', () => { el('search').value = ''; el('group').value = ''; el('state').value = ''; render(); });
   ['search', 'group', 'state'].forEach(id => el(id).addEventListener(id === 'search' ? 'input' : 'change', render));
   function loadSheet(gid, range) {
