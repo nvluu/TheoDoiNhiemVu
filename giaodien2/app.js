@@ -47,16 +47,24 @@ if (typeof document !== 'undefined') {
   const displayTime = time => new Date(time).toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'});
   let data, request = 0, loading = false, callbackId = 0;
   const node = (tag, text, className) => { const n = document.createElement(tag); n.textContent = text; if (className) n.className = className; return n; };
+  const summaryMatches = {
+    __ongoing: row => /^Đang /i.test(row[6].trim()),
+    __completed: row => /^(Đã hoàn thành|Hoàn thành)$/i.test(row[6].trim()),
+    __overdue: row => [row[6], row[9]].some(value => /^(Trễ hạn|Quá hạn)$/i.test((value || '').trim()))
+  };
   function render() {
     if (!data) return;
     const query = el('search').value.toLocaleLowerCase('vi').trim();
-    const filtered = data.records.filter(({row, unit}) => [...row, ...(unit || [])].join(' ').toLocaleLowerCase('vi').includes(query) && (!el('group').value || (row[1].trim() || '__missing') === el('group').value) && (!el('state').value || (row[6].trim() || '__missing') === el('state').value));
+    const matching = data.records.filter(({row, unit}) => [...row, ...(unit || [])].join(' ').toLocaleLowerCase('vi').includes(query) && (!el('group').value || (row[1].trim() || '__missing') === el('group').value));
+    const state = el('state').value;
+    const filtered = matching.filter(({row}) => !state || (summaryMatches[state] ? summaryMatches[state](row) : (row[6].trim() || '__missing') === state));
+    document.querySelectorAll('[data-task-filter]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.taskFilter === state)));
     el('count').textContent = `${filtered.length}/${data.records.length}`;
-    el('completed-count').textContent = filtered.filter(({row}) => /^(Đã hoàn thành|Hoàn thành)$/i.test(row[6].trim())).length;
-    el('overdue-count').textContent = filtered.filter(({row}) => [row[6], row[9]].some(value => /^(Trễ hạn|Quá hạn)$/i.test((value || '').trim()))).length;
-    const completed = Number(el('completed-count').textContent);
-    const overdue = Number(el('overdue-count').textContent);
-    const ongoing = filtered.filter(({row}) => /^Đang /i.test(row[6].trim())).length;
+    el('completed-count').textContent = matching.filter(({row}) => summaryMatches.__completed(row)).length;
+    el('overdue-count').textContent = matching.filter(({row}) => summaryMatches.__overdue(row)).length;
+    const completed = filtered.filter(({row}) => summaryMatches.__completed(row)).length;
+    const overdue = filtered.filter(({row}) => summaryMatches.__overdue(row)).length;
+    const ongoing = matching.filter(({row}) => summaryMatches.__ongoing(row)).length;
     el('ongoing-count').textContent = ongoing;
     el('filtered-units').textContent = new Set(filtered.map(({row}) => row[1].trim()).filter(Boolean)).size;
     const percent = filtered.length ? Math.round(completed / filtered.length * 100) : 0;
@@ -105,7 +113,7 @@ if (typeof document !== 'undefined') {
       const unit = data.units.find(r => r[0].trim() === code);
       el('group').add(new Option(unit ? `${code} · ${unit[1]}` : code || 'Chưa có mã đơn vị', code || '__missing'));
     }
-    el('state').replaceChildren(new Option('Tất cả trạng thái', ''));
+    el('state').replaceChildren(new Option('Tất cả trạng thái', ''), new Option('Nhóm: Đang thực hiện', '__ongoing'), new Option('Nhóm: Đã hoàn thành', '__completed'), new Option('Nhóm: Quá hạn (trạng thái / ghi chú)', '__overdue'));
     for (const state of new Set(data.records.map(r => r.row[6].trim()))) el('state').add(new Option(state || 'Chưa có trạng thái', state || '__missing'));
     if ([...el('group').options].some(o => o.value === selectedGroup)) el('group').value = selectedGroup;
     if ([...el('state').options].some(o => o.value === selectedState)) el('state').value = selectedState;
@@ -119,6 +127,12 @@ if (typeof document !== 'undefined') {
     try { const response = await fetch(url, {signal: controller.signal}); if (!response.ok) throw new Error(`Nguồn dữ liệu trả về lỗi ${response.status}.`); return await response.text(); }
     finally { clearTimeout(timer); }
   }
+  document.querySelectorAll('[data-task-filter]').forEach(button => button.addEventListener('click', () => {
+    if (!data) return;
+    el('state').value = button.dataset.taskFilter;
+    render();
+    el('task-list').scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+  }));
   el('reset').addEventListener('click', () => { el('search').value = ''; el('group').value = ''; el('state').value = ''; render(); });
   ['search', 'group', 'state'].forEach(id => el(id).addEventListener(id === 'search' ? 'input' : 'change', render));
   function loadSheet(gid, range) {
