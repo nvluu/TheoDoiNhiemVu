@@ -31,7 +31,7 @@ function readData(taskText, unitText) {
   const directory = units.rows.filter(r => r[0]?.trim() && r[1]?.trim());
   const byCode = new Map(directory.map(r => [r[0].trim(), r]));
   const records = tasks.rows.filter(r => /^\d+$/.test(r[0].trim()) && r[2]?.trim()).map(row => ({row, unit: byCode.get(row[1].trim())}));
-  if (!records.length || !directory.length) throw new Error('Bảng tính chưa có nhiệm vụ hoặc đơn vị.');
+  if (!directory.length) throw new Error('Bảng tính chưa có danh mục đơn vị.');
   return {headers: tasks.headers, records, units: directory, title: tasks.title};
 }
 function sheetCSV(response) {
@@ -198,5 +198,12 @@ if (typeof document !== 'undefined') {
       return true;
     } catch { return false; }
   }
-  if (!openCache()) refresh();
+  const pageURL = new URL(window.location.href);
+  const requestedFreshData = pageURL.searchParams.get('refresh') === '1';
+  if (requestedFreshData) {
+    pageURL.searchParams.delete('refresh');
+    window.history.replaceState(null, '', pageURL);
+    openCache();
+    refresh();
+  } else if (!openCache()) refresh();
 }

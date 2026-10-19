@@ -28,3 +28,9 @@ Khi thay đổi `app.js`, cập nhật tham số `v` của script trong `index.h
 Giao diện `giaodien2`: thanh điều hướng xanh, 5 ô thống kê, vòng tỷ lệ hoàn thành và toàn bộ đơn vị theo số nhiệm vụ trong vùng cuộn. Biểu đồ/statistics cùng dùng danh sách đang lọc; các nhóm trạng thái có thể chồng lấp (nhiệm vụ đang thực hiện có thể có ghi chú quá hạn). Nút Xóa bộ lọc khôi phục toàn bộ danh sách. CSS nằm trong `dashboard.css`. Cache và cập nhật thủ công giữ nguyên.
 
 Biểu đồ đơn vị hiển thị cả các đơn vị có 0 nhiệm vụ, mã chưa có trong danh mục và nhiệm vụ thiếu mã.
+
+## Nhập liệu riêng tư (nhánh nhapdulieu)
+
+Đã thêm nút **Đăng nhập / Nhập liệu**, form quản lý nhiệm vụ và backend Google Apps Script chỉ chấp nhận **ongtaymepho@gmail.com**. Google xử lý đăng nhập; thêm/sửa/xóa/khôi phục đều kiểm tra tài khoản ở máy chủ. Danh mục đơn vị chỉ đọc. Backend chưa được triển khai trong tài khoản Google, `editor-config.js` đang để trống URL; không có đăng nhập/lưu giả lập trên web thật.
+
+Xem [hướng dẫn triển khai và kiểm tra](apps-script/README.md). Không đưa mật khẩu hoặc token vào repository. Chỉ cần URL Web app sau khi chủ Gmail tự triển khai Apps Script riêng tư. Bản này chưa merge vào main.

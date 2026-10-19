@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="vi"><head><base target="_top"><meta charset="utf-8">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#172b48;font:16px system-ui}header{background:#176ac6;color:white;padding:22px max(20px,calc((100vw - 1100px)/2))}header h1{font-size:24px;margin:0 0 8px}header p{margin:0;font-size:14px}main{max-width:1140px;margin:auto;padding:24px 20px}a{color:#176ac6}button,input,select,textarea{font:inherit}button{cursor:pointer;border:1px solid #ccd9e8;border-radius:8px;padding:10px 14px;background:white;color:#24466d}button.primary{background:#176ac6;color:white;border-color:#176ac6}button.danger{color:#a32130;border-color:#e5b9bf}button:disabled{cursor:wait;opacity:.6}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #6ab1ff;outline-offset:2px}.tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.panel{background:white;border:1px solid #dce5ef;border-radius:12px;padding:20px;margin:16px 0}.muted{color:#647a94;font-size:14px;line-height:1.7}#message{padding:12px 16px;border-radius:8px;background:#e5effb;white-space:pre-wrap;line-height:1.7}#message.error{background:#ffeaec;color:#912133}.badge{background:#eaf2fb;color:#285c96;border-radius:6px;padding:5px 9px;font-size:13px;font-weight:700}article h3{font-size:17px;line-height:1.6}article p{line-height:1.7;white-space:pre-wrap}input,select,textarea{width:100%;padding:10px;border:1px solid #c9d7e7;border-radius:7px;background:white;color:#172b48}textarea{resize:vertical;min-height:95px}label{display:block;font-size:14px;font-weight:600;margin-bottom:7px}.field{margin-bottom:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.full{grid-column:1/-1}.toolbar{justify-content:space-between}.tabs{margin:18px 0}.tabs button[aria-pressed=true]{background:#dcecff;border-color:#75aae2;color:#144f8d}dialog{border:0;border-radius:14px;padding:24px;width:min(850px,calc(100vw - 24px));max-height:90vh;color:#172b48;box-shadow:0 10px 60px #19385b40}dialog::backdrop{background:#142b4a75}dialog h2{margin:0 0 16px;font-size:22px}.dialog-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;padding-top:16px;border-top:1px solid #dce5ef}#form-error{color:#a32130;white-space:pre-wrap;line-height:1.6}.notice{padding:12px;background:#fff3dc;color:#815b19;border-radius:8px;font-size:14px;line-height:1.7}[hidden]{display:none!important}@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}main{padding:16px 12px}dialog{padding:18px}.panel{padding:16px}.toolbar>*{width:100%}}
+</style></head><body>
+<header><h1>Quản lý nhiệm vụ</h1><p id="identity">Đang kiểm tra tài khoản Google…</p></header>
+<main>
+<div class="tools toolbar"><div class="tools"><button id="new-task" class="primary" disabled>+ Thêm nhiệm vụ</button><button id="reload" disabled>Tải lại danh sách</button></div><a id="dashboard" href="https://nvluu.github.io/TheoDoiNhiemVu/?refresh=1" target="_blank" rel="noopener">Mở dashboard với dữ liệu mới ↗</a></div>
+<p class="muted">Thay đổi được ghi trực tiếp vào Google Sheets. Danh mục đơn vị chỉ dùng để chọn, không chỉnh sửa tại đây.</p>
+<p id="message" role="status">Đang mở dữ liệu…</p>
+<div class="tools tabs"><button id="active-tab" aria-pressed="true">Danh sách nhiệm vụ</button><button id="trash-tab" aria-pressed="false">Thùng rác</button></div>
+<label for="query">Tìm kiếm</label><input type="search" id="query" placeholder="Tên nhiệm vụ, đơn vị, người phụ trách…">
+<p class="muted" id="counter"></p><section id="list" aria-label="Danh sách quản lý nhiệm vụ"></section>
+</main>
+<dialog id="task-dialog" aria-labelledby="form-title"><form id="task-form"><h2 id="form-title">Thêm nhiệm vụ</h2><p id="record-label" class="muted"></p>
+<div class="grid">
+<div class="field"><label for="unit">Đơn vị *</label><select id="unit" name="unit" required></select></div>
+<div class="field"><label for="state">Trạng thái *</label><select id="state" name="state" required></select></div>
+<div class="field full"><label for="title">Tên nhiệm vụ *</label><textarea id="title" name="title" required maxlength="10000"></textarea></div>
+<div class="field full"><label for="plan">Phương án xử lý / Sản phẩm đầu ra</label><textarea id="plan" name="plan" maxlength="10000"></textarea></div>
+<div class="field"><label for="deadline">Thời hạn xử lý</label><input id="deadline" name="deadline" maxlength="10000" placeholder="Ví dụ: 30/11/2026 hoặc Quý IV/2026"></div>
+<div class="field"><label for="leader">Lãnh đạo phụ trách</label><input id="leader" name="leader" maxlength="10000"></div>
+<div class="field full"><label for="document">Văn bản giao nhiệm vụ</label><textarea id="document" name="document" maxlength="10000"></textarea></div>
+<div class="field full"><label for="progress">Tiến độ, kết quả thực hiện</label><textarea id="progress" name="progress" maxlength="10000"></textarea></div>
+<div class="field full"><label for="notes">Ghi chú</label><textarea id="notes" name="notes" maxlength="10000"></textarea></div>
+</div><p id="form-error" role="alert"></p><div class="dialog-actions"><button type="button" id="cancel-edit">Hủy</button><button class="primary" id="save" type="submit">Lưu vào Google Sheets</button></div>
+</form></dialog>
+<dialog id="delete-dialog" aria-labelledby="delete-title"><h2 id="delete-title">Xóa nhiệm vụ?</h2><p id="delete-name"></p><p class="notice">Nhiệm vụ sẽ được bỏ khỏi danh sách công khai và lưu vào thùng rác riêng tư để khôi phục.</p><p id="delete-error" role="alert"></p><div class="dialog-actions"><button id="cancel-delete">Hủy</button><button id="confirm-delete" class="danger">Xóa nhiệm vụ</button></div></dialog>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const fieldNames = ['unit','title','plan','deadline','leader','state','document','progress','notes'];
+let tasks = [], units = [], states = [], deleted = [], trash = false, busy = false, ready = false, editing = null, deleting = null, draftId = '', baseline = '';
+const rpc = (method, ...args) => new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[method](...args));
+const node = (tag, text, cls) => {const el = document.createElement(tag);el.textContent = text;if (cls) el.className = cls;return el;};
+function message(text, error = false) {$('message').textContent = text;$('message').classList.toggle('error', error);}
+function setBusy(value) {busy = value;document.querySelectorAll('button').forEach(b => b.disabled = value);$('task-form').querySelectorAll('input,select,textarea').forEach(input => input.disabled = value);['new-task','trash-tab','active-tab'].forEach(id => $(id).disabled = value || !ready);}
+function formValues() {return fieldNames.map(name => $(name).value);}
+function dirty() {return $('task-dialog').open && JSON.stringify(formValues()) !== baseline;}
+function render() {
+  const query = $('query').value.trim().toLocaleLowerCase('vi');
+  const records = (trash ? deleted : tasks).filter(t => t.values.join(' ').toLocaleLowerCase('vi').includes(query));
+  $('counter').textContent = `${records.length}/${trash ? deleted.length : tasks.length} nhiệm vụ${trash ? ' trong thùng rác' : ''}`;
+  $('active-tab').setAttribute('aria-pressed', String(!trash));$('trash-tab').setAttribute('aria-pressed', String(trash));
+  const list = $('list');list.replaceChildren();
+  for (const task of records) {
+    const card = node('article', '', 'panel'), unit = units.find(r => r[0].trim() === task.values[1].trim());
+    card.append(node('span', unit ? unit[1] : task.values[1] || 'Chưa có mã đơn vị', 'badge'), node('h3', `${task.values[0]}. ${task.values[2]}`));
+    card.append(node('p', `Thời hạn: ${task.values[4] || '—'} · Trạng thái: ${task.values[6] || '—'}`, 'muted'));
+    const actions = node('div', '', 'tools');
+    if (trash) {
+      const restore = node('button', 'Khôi phục');restore.disabled = busy;restore.addEventListener('click', () => restoreRecord(task));actions.append(restore);
+      card.append(node('p', `Đã xóa lúc ${new Date(task.deletedAt).toLocaleString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'})}`, 'muted'));
+    } else {
+      const edit = node('button', 'Sửa'), remove = node('button', 'Xóa', 'danger');edit.disabled = remove.disabled = busy;
+      edit.addEventListener('click', () => openForm(task));remove.addEventListener('click', () => {deleting = task;$('delete-name').textContent = task.values[2];$('delete-error').textContent = '';$('delete-dialog').showModal();});actions.append(edit, remove);
+    }
+    card.append(actions);list.append(card);
+  }
+  if (!records.length) list.append(node('p', trash ? 'Thùng rác chưa có nhiệm vụ phù hợp.' : 'Chưa có nhiệm vụ phù hợp.', 'panel'));
+}
+async function load() {
+  if (busy) return;setBusy(true);
+  try {const result = await rpc('listTasks');tasks = result.tasks;units = result.units;states = result.states;ready = true;$('identity').textContent = `Đã đăng nhập: ${result.email}`;trash = false;message(`Đã đọc ${tasks.length} nhiệm vụ từ Google Sheets.`);render();}
+  catch (error) {message(error.message || 'Không mở được dữ liệu.', true);}
+  finally {setBusy(false);}
+}
+function options(id, items, value) {
+  const select = $(id);select.replaceChildren();
+  for (const [key, label] of items) select.add(new Option(label, key));
+  if (![...select.options].some(o => o.value === value)) select.add(new Option(value || 'Chưa có dữ liệu', value));
+  select.value = value;
+}
+function openForm(task) {
+  if (busy) return;
+  editing = task;draftId = task ? task.id : crypto.randomUUID();
+  $('form-title').textContent = task ? 'Sửa nhiệm vụ' : 'Thêm nhiệm vụ';$('record-label').textContent = task ? `STT ${task.values[0]} · STT được giữ nguyên khi sửa` : 'STT và mã nhiệm vụ được tạo tự động khi lưu.';
+  const values = task ? task.values.slice(1) : ['', '', '', '', '', 'Đang thực hiện', '', '', ''];
+  options('unit', [['','Chọn đơn vị'], ...units.map(r => [r[0].trim(), `${r[0]} · ${r[1]}`])], values[0]);
+  options('state', states.map(s => [s,s]), values[5]);
+  fieldNames.forEach((name,i) => $(name).value = values[i]);
+  baseline = JSON.stringify(formValues());$('form-error').textContent = '';$('task-dialog').showModal();
+}
+function cancelForm() {if (!busy && (!dirty() || confirm('Bỏ các thay đổi chưa lưu?'))) $('task-dialog').close();}
+$('cancel-edit').addEventListener('click', cancelForm);
+$('task-dialog').addEventListener('cancel', event => {event.preventDefault();cancelForm();});
+$('task-form').addEventListener('submit', async event => {
+  event.preventDefault();if (busy || !$('task-form').reportValidity()) return;
+  const payload = {id: draftId, version: editing?.version || null, fields: formValues()};setBusy(true);$('form-error').textContent = '';
+  try {
+    const result = await rpc('saveTask', payload), index = tasks.findIndex(t => t.id === result.id);
+    if (index < 0) tasks.push(result);else tasks[index] = result;
+    $('task-dialog').close();trash = false;render();message('Đã lưu thành công vào Google Sheets. Bấm “Mở dashboard với dữ liệu mới” để xem bản mới trên dashboard.');
+  } catch (error) {$('form-error').textContent = error.message || 'Chưa xác nhận lưu thành công. Dữ liệu trong form được giữ lại; có thể thử lại.';}
+  finally {setBusy(false);}
+});
+$('cancel-delete').addEventListener('click', () => {if (!busy) $('delete-dialog').close();});
+$('delete-dialog').addEventListener('cancel', event => {if (busy) event.preventDefault();});
+$('confirm-delete').addEventListener('click', async () => {
+  if (busy || !deleting) return;setBusy(true);$('delete-error').textContent = '';
+  try {await rpc('deleteTask', {id:deleting.id, version:deleting.version});tasks = tasks.filter(t => t.id !== deleting.id);$('delete-dialog').close();render();message('Đã xóa nhiệm vụ khỏi Google Sheets. Có thể khôi phục trong Thùng rác.');}
+  catch (error) {$('delete-error').textContent = error.message || 'Chưa xác nhận xóa thành công. Hãy tải lại danh sách trước khi thử lại.';}
+  finally {setBusy(false);}
+});
+async function restoreRecord(task) {
+  if (busy) return;setBusy(true);
+  try {const result = await rpc('restoreTask', task.eventId);if (!tasks.some(t => t.id === result.id)) tasks.push(result);deleted = deleted.filter(t => t.id !== result.id);render();message('Đã khôi phục nhiệm vụ vào Google Sheets.');}
+  catch (error) {message(error.message || 'Không khôi phục được nhiệm vụ.', true);}
+  finally {setBusy(false);}
+}
+$('trash-tab').addEventListener('click', async () => {
+  if (busy) return;setBusy(true);
+  try {deleted = await rpc('listDeletedTasks');trash = true;render();message('Thùng rác riêng tư. Chỉ tài khoản nhập liệu được truy cập.');}
+  catch (error) {message(error.message || 'Không mở được thùng rác.', true);}
+  finally {setBusy(false);}
+});
+$('active-tab').addEventListener('click', () => {if (!busy) {trash = false;render();}});
+$('query').addEventListener('input', render);$('new-task').addEventListener('click', () => openForm(null));$('reload').addEventListener('click', load);
+window.addEventListener('beforeunload', event => {if (dirty() || busy) {event.preventDefault();event.returnValue = '';}});
+load();
+</script></body></html>
